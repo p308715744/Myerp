@@ -75,7 +75,7 @@ class BudingAction extends Action{
 		}
 		echo "执行page=".$_REQUEST['page'].'<br>';
 		$num = ($_REQUEST['page']-1)*800;
-		$all = $ViewTaskShenhe->where("`datatype` = '报账单' or `datatype` = '报账项'")->limit("$num,800")->findall();
+		$all = $ViewTaskShenhe->where("`datatype` = '报账单' or `datatype` = '报账项'")->limit("$num,800")->order("systemID desc")->findall();
 		//$all = $ViewTaskShenhe->where("`datatype` = '报账单' or `datatype` = '报账项'")->limit("50")->order("systemID desc")->findall();
 		
 		if(count($all)==0){
@@ -109,10 +109,10 @@ class BudingAction extends Action{
 					
 			}
 			if($cp['marktype'] == 'DJtuan'){
-				$zituan = $ViewZituan->where("`chanpinID` = '$cp[chanpinID]'")->find();
-				$data['taskShenhe']['tuantitle_copy'] = $zituan['title'];
-				$data['taskShenhe']['tuanqi_copy'] = $zituan['jietuantime'];
-				$data['taskShenhe']['tuanhao_copy'] = $zituan['tuanhao'];
+				$djtuan = $ViewDJtuan->where("`chanpinID` = '$cp[chanpinID]'")->find();
+				$data['taskShenhe']['tuantitle_copy'] = $djtuan['title'];
+				$data['taskShenhe']['tuanqi_copy'] = $djtuan['jietuantime'];
+				$data['taskShenhe']['tuanhao_copy'] = $djtuan['tuanhao'];
 			}
 			if(false === $System->relation("taskShenhe")->myRcreate($data))
 			{
@@ -467,6 +467,48 @@ class BudingAction extends Action{
 	
 	
 	
+	//产品报账状态描述重置
+    public function chanpinbaozhangremark() {
+		exit;
+		C('TOKEN_ON',false);
+		echo "产品报账状态描述重置";
+		$Chanpin = D("Chanpin");
+		$ViewBaozhang = D("ViewBaozhang");
+		$bzdall = $ViewBaozhang->where("`type` = '团队报账单'")->findall();
+		foreach($bzdall as $v){
+			if($v['status_shenhe'] == '批准'){
+				$data['chanpinID'] = $v['parentID'];
+				$d = $Chanpin->where("`chanpinID` = '$data[chanpinID] '")->find();
+				$data[$d['marktype']]['baozhang_remark'] = $v['shenhe_remark'];
+				if(false === $Chanpin->relation($d['marktype'])->myRcreate($data)){
+				dump($data);
+				dump($Chanpin);
+				}
+			}
+		}
+		echo "结束";
+	}
+	
+	
+	
+	//客户导出测试
+    public function customertest() {
+		$DataCD = D("DataCD");	
+		$cusall = $DataCD->Distinct(true)->field("telnum")->findall();
+		$i = 0;
+		foreach($cusall as $v){
+			if(strlen($v['telnum']) == 11)
+				$tellist[$i] = $v['telnum'];
+			$i++;
+		}
+		$this->assign("cusall",$tellist);
+		//导出Word必备头
+		header("Content-type:application/msword");
+		header("Content-Disposition:attachment;filename=" . '客户电话名单'.".txt");
+		header("Pragma:no-cache");        
+		header("Expires:0");  
+		$this->display('Index:customerlist');
+	}
 	
 	
 	

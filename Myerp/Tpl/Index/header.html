@@ -32,7 +32,15 @@ var SITE_PUBLIC = '<{:__PUBLIC__}>';
 </script>
 
 <script type='text/javascript' src='<{:__PUBLIC__}>/myerp/Index/header.js'></script>
-
+<style>
+.font1{
+	color:#aaaaaa;
+}
+.font2
+{
+	color:black;
+}
+</style>
 </head>
 
 <body>
@@ -50,7 +58,7 @@ var SITE_PUBLIC = '<{:__PUBLIC__}>';
     </strong> [ <a href="javascript:logout()" class="utilsLink">注销</a> ] </div>
   <div id="search" style="padding:18px 0 0 10px; border:none ">
       <img id="unified_search_advanced_img" src="<{:__PUBLIC__}>/myerp/images/searchMore.gif" alt="查找">&nbsp;
-      <input type="text" id="query_string" size="20" >
+      <input type="text" id="query_string" value="请输入查询码" class="font1" onblur="if(this.value==''){this.value='请输入查询码';this.className='font1'}" onfocus="if(this.value==this.defaultValue){this.value='';this.className='font2'}">
       &nbsp;
       <input style="margin-top:-2px;" type="submit" class="button" value="查找" onclick="headsearch()">
   </div>
@@ -74,17 +82,17 @@ var SITE_PUBLIC = '<{:__PUBLIC__}>';
 <php>if($is_dijie || $is_caiwu){</php>      
       <li class="noBorder">&nbsp;</li>
       <php>if($navposition == '产品地接'){</php>
-      <li> <span class="currentTabLeft">&nbsp;</span><span class="currentTab"> <a href="<{:SITE_INDEX}>Dijie/index" id="grouptab_5">&nbsp;产品地接&nbsp;</a> </span><span class="currentTabRight">&nbsp;</span> </li>
+      <li> <span class="currentTabLeft">&nbsp;</span><span class="currentTab"> <a href="<{:SITE_INDEX}>Dijie/index" id="grouptab_5">&nbsp;地接产品&nbsp;</a> </span><span class="currentTabRight">&nbsp;</span> </li>
       <php>}else{</php>
-      <li> <span class="notCurrentTabLeft">&nbsp;</span><span class="notCurrentTab"> <a href="<{:SITE_INDEX}>Dijie/index" id="grouptab_5">&nbsp;产品地接&nbsp;</a> </span><span class="notCurrentTabRight">&nbsp;</span> </li>
+      <li> <span class="notCurrentTabLeft">&nbsp;</span><span class="notCurrentTab"> <a href="<{:SITE_INDEX}>Dijie/index" id="grouptab_5">&nbsp;地接产品&nbsp;</a> </span><span class="notCurrentTabRight">&nbsp;</span> </li>
       <php>}</php>
 <php>}</php>
 <php>if($is_caiwu){</php>      
       <li class="noBorder">&nbsp;</li>
       <php>if($navposition == '财务管理'){</php>
-      <li> <span class="currentTabLeft">&nbsp;</span><span class="currentTab"> <a href="<{:SITE_INDEX}>Caiwu/shenhe/type/收支项" id="grouptab_1">&nbsp;财务管理&nbsp;</a> </span><span class="currentTabRight">&nbsp;</span> </li>
+      <li> <span class="currentTabLeft">&nbsp;</span><span class="currentTab"> <a href="<{:SITE_INDEX}>Caiwu/tuansearch" id="grouptab_1">&nbsp;财务管理&nbsp;</a> </span><span class="currentTabRight">&nbsp;</span> </li>
       <php>}else{</php>
-      <li> <span class="notCurrentTabLeft">&nbsp;</span><span class="notCurrentTab"> <a href="<{:SITE_INDEX}>Caiwu/shenhe/type/收支项" id="grouptab_1">&nbsp;财务管理&nbsp;</a> </span><span class="notCurrentTabRight">&nbsp;</span> </li>
+      <li> <span class="notCurrentTabLeft">&nbsp;</span><span class="notCurrentTab"> <a href="<{:SITE_INDEX}>Caiwu/tuansearch" id="grouptab_1">&nbsp;财务管理&nbsp;</a> </span><span class="notCurrentTabRight">&nbsp;</span> </li>
       <php>}</php>
 <php>}</php>
 <php>if($is_wangguan){</php>      
@@ -122,12 +130,15 @@ var SITE_PUBLIC = '<{:__PUBLIC__}>';
           <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/港澳/guojing/境外">港澳 </a> </li>
           <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/东南亚/guojing/境外">东南亚 </a> </li>
           <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/欧美岛/guojing/境外">欧美岛 </a> </li>
+          <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/俄罗斯/guojing/境外">俄罗斯 </a> </li>
+          <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/越柬/guojing/境外">越柬 </a> </li>
           <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/自由人/guojing/境外">境外自由人 </a> </li>
           <li> <a href="<{:SITE_INDEX}>Chanpin/fabu/kind/包团/guojing/境外">境外包团 </a> </li>
         </ul>
       </li>
       <li> <a href="<{:SITE_INDEX}>Chanpin/shenhe">产品审核</a> </li>
-      <li> <a href="<{:SITE_INDEX}>Chanpin/kongguan">产品控管</a> </li>
+      <li> <a href="<{:SITE_INDEX}>Chanpin/kongguan">产品（子团）控管</a> </li>
+      <li> <a href="<{:SITE_INDEX}>Chanpin/tongji">子团产品统计</a> </li>
       <li> <a href="<{:SITE_INDEX}>Chanpin/danxiangfuwu">单项服务及补账</a> </li>
       <li> <a href="<{:SITE_INDEX}>Xiaoshou/dingdanlist">订单控管</a> </li>
       <li> <a href="<{:SITE_INDEX}>Chanpin/customer">游客管理</a> </li>
@@ -142,8 +153,13 @@ var SITE_PUBLIC = '<{:__PUBLIC__}>';
       <li> <a href="<{:SITE_INDEX}>Caiwu/shenhe/type/报账单">报账管理</a> </li>
       <li> <a href="<{:SITE_INDEX}>Caiwu/shenhe/type/订单">提成管理</a> </li>
       <li> <a href="<{:SITE_INDEX}>Caiwu/zituanlist/dotype/团费确认">团费确认</a> </li>
-      <li> <a href="<{:SITE_INDEX}>Caiwu/zituanlist/dotype/产品搜索">组团产品</a> </li>
-      <li> <a href="<{:SITE_INDEX}>Caiwu/djtuanlist">地接产品</a> </li>
+      <li class="subTabMore"> <a href="<{:SITE_INDEX}>Caiwu/tuansearch">组团地接产品>></a> 
+        <ul class="cssmenu">
+          <li> <a href="<{:SITE_INDEX}>Caiwu/zituanlist/dotype/产品搜索">组团产品 </a> </li>
+          <li> <a href="<{:SITE_INDEX}>Caiwu/djtuanlist">地接产品 </a> </li>
+        </ul>
+      </li>
+      <li> <a href="<{:SITE_INDEX}>Caiwu/danxiangfuwu">单项服务</a> </li>
       <li> <a href="<{:SITE_INDEX}>Caiwu/jixiao_tongji/type/员工">统计(绩效)</a> </li>
       <li> <a href="<{:SITE_INDEX}>Caiwu/yingshou_tongji">统计(营收)</a> </li>
     </ul>

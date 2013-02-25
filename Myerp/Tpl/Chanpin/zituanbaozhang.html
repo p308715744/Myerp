@@ -30,7 +30,8 @@ function dosetprint(ele,id)
 
 function doprint(type){
 	var url = SITE_INDEX+'<{$actionmethod}>/zituanbaozhang/doprint/'+type+'/chanpinID/<{$chanpinID}>/baozhangID/<{$baozhangID}>';
-    window.open(url,null,"height=800,width=1200,status=yes,toolbar=no,menubar=no,location=no");
+    //window.open(url,'_blank',"height=500,width=1000,status=yes,toolbar=no,menubar=no,location=no");
+    window.open(url,'_blank');
 }
 
 function exports(type)
@@ -42,12 +43,15 @@ function exports(type)
 
 function doshenhe_baozhangitem(dotype,datatype,dataID,title){
 	ThinkAjax.myloading('resultdiv');
+	act = jQuery("#btshenhe_"+dataID).attr("onclick"); 
+	jQuery("#btshenhe_"+dataID).attr("onclick","alert('正在执行请稍候...')"); 
 	jQuery.ajax({
 		type:	"POST",
 		url:	SITE_INDEX+"<{$actionmethod}>/doshenhe",
 		data:	"dataID="+dataID+"&dotype="+dotype+"&datatype="+datatype+"&title="+title,
 		success:function(msg){
 			scroll(0,0);
+			jQuery("#btshenhe_"+dataID).attr("onclick","alert("+act+")"); 
 			ThinkAjax.myAjaxResponse(msg,'resultdiv',shenhe_after);
 		}
 	});
@@ -60,16 +64,31 @@ function shenhe_after(data,status){
 		location.reload();
 	}
 }
+
+
+function shenhehistory(chanpinID,obj){
+   if(jQuery("#shenhediv").is(":visible")==true){ 
+	  jQuery('#shenhediv').hide();
+	  return ;
+   }
+//    getshenhemessage("index.php?s=/Message/getshenhemessage/chanpinID/"+chanpinID);
+    getshenhemessage("index.php?s=/Message/get_BZDshenhemessage/chanpinID/"+chanpinID);
+	objleft = getPosLeft(obj) - 370;
+	objtop = getPosTop(obj) + 20;
+	jQuery('#shenhediv').css({top:objtop , left:objleft });
+	jQuery('#shenhediv').show();
+}
+
 </script>
 
 <link href="<{:__PUBLIC__}>/gulianstyle/styles/WdatePicker.css" rel="stylesheet" type="text/css">
 <div id="main"> 
 
-<php>if($actionmethod == 'Chanpin'){</php>
+<php>if($actionmethod == 'Chanpin' && !$action_type){</php>
 <include file="Chanpin:left_kongguan" />
   <div id="content" style="margin-left:180px;">
 <php>}</php>
-<php>if($actionmethod == 'Dijie'){</php>
+<php>if($actionmethod == 'Dijie' && !$action_type){</php>
     <php>if($chanpinID){</php>
       <tp:includeCA file="Dijie:left_chanpin" />
       <div id="content" style="margin-left:180px;">
@@ -81,11 +100,14 @@ function shenhe_after(data,status){
     <div id="resultdiv" class="resultdiv"></div>
     <div id="resultdiv_2" class="resultdiv"></div>
     
-    <php>if($actionmethod == 'Chanpin'){</php>
+    <php>if($actionmethod == 'Chanpin' && !$action_type){</php>
     <tp:includeCA file="Chanpin:header_kongguan" />
     <php>}</php>
-    <php>if($actionmethod == 'Dijie'){</php>
+    <php>if($actionmethod == 'Dijie' && !$action_type){</php>
     <tp:includeCA file="Dijie:header_chanpin" />
+    <php>}</php>
+    <php>if($action_type == 'Caiwu'){</php>
+    <tp:includeCA file="Chanpin:header_kongguan" />
     <php>}</php>
     
     <form name="form1" method="post" id="form1" >
@@ -112,7 +134,7 @@ function shenhe_after(data,status){
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 报账人数（数字）: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="renshu" type="text" value="<php>echo trim($baozhang['renshu'])</php>" check="^\S+$" warning="人数不能为空,且不能含有空格"></td>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 接团单位: </td>
-          <td valign="top" scope="row" style="min-width:100px;"><input name="jietuandanwei" type="text" value="<php>echo trim($baozhang['datatext']['jietuandanwei'])</php>" check="^\S+$" warning="接团单位不能为空,且不能含有空格"></td>
+          <td valign="top" scope="row" style="min-width:100px;"><input name="jietuandanwei" type="text" value="<php>echo trim($baozhang['datatext']['jietuandanwei'])</php>"></td>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 签约人: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="qianyueren" type="text" value="<php>echo trim($baozhang['datatext']['qianyueren'])</php>"></td>
         </tr>
@@ -121,8 +143,8 @@ function shenhe_after(data,status){
           <td valign="top" scope="row" style="min-width:100px;"><input name="lingdui_num" type="text" value="<php>echo trim($baozhang['datatext']['lingdui_num'])</php>"></td>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 领队名: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="quanpei" type="text" value="<php>echo trim($baozhang['datatext']['quanpei'])</php>" ></td>
-          <td valign="top" scope="row" style="min-width:100px; width:100px;"></td>
-          <td valign="top" scope="row" style="min-width:100px;"></td>
+          <td valign="top" scope="row" style="min-width:100px; width:100px;"> 自定义标题: </td>
+          <td valign="top" scope="row" style="min-width:100px;"><input name="retitle" type="text" style="width:200px;" value="<php>echo trim($baozhang['datatext']['retitle'])</php>" ></td>
         </tr>
         <php>}</php>
             <php>
@@ -133,7 +155,7 @@ function shenhe_after(data,status){
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 报账人数（数字）: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="renshu" type="text" value="<php>echo trim($baozhang['renshu'])</php>" check="^\S+$" warning="人数不能为空,且不能含有空格"></td>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 接团单位: </td>
-          <td valign="top" scope="row" style="min-width:100px;"><input name="jietuandanwei" type="text" value="<php>echo trim($baozhang['datatext']['jietuandanwei'])</php>" check="^\S+$" warning="接团单位不能为空,且不能含有空格"></td>
+          <td valign="top" scope="row" style="min-width:100px;"><input name="jietuandanwei" type="text" value="<php>echo trim($baozhang['datatext']['jietuandanwei'])</php>"></td>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 签约人: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="qianyueren" type="text" value="<php>echo trim($baozhang['datatext']['qianyueren'])</php>"></td>
         </tr>
@@ -153,6 +175,10 @@ function shenhe_after(data,status){
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 抵连时间: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input style="width:200px;" name="dilianshijian" type="text" value="<php>echo trim($baozhang['datatext']['dilianshijian'])</php>" onfocus="WdatePicker({dateFmt:'yyyy年MM月dd日 HH时mm分'})"></td>
         </tr>
+        <tr>
+          <td valign="top" scope="row" style="min-width:100px; width:100px;"> 自定义标题: </td>
+          <td valign="top" scope="row" style="min-width:100px;"><input name="retitle" type="text" style="width:200px;" value="<php>echo trim($baozhang['datatext']['retitle'])</php>" ></td>
+        </tr>
         <php>}</php>
         
             <php>
@@ -162,6 +188,8 @@ function shenhe_after(data,status){
         <tr>
           <td valign="top" scope="row" style="min-width:100px; width:100px;"> 报账人数: </td>
           <td valign="top" scope="row" style="min-width:100px;"><input name="renshu" type="text" value="<php>echo trim($baozhang['renshu'])</php>" check="^\S+$" warning="人数不能为空,且不能含有空格"></td>
+          <td valign="top" scope="row" style="min-width:100px; width:100px;"> 自定义标题: </td>
+          <td valign="top" scope="row" style="min-width:100px;"><input name="retitle" type="text" style="width:200px;" value="<php>echo trim($baozhang['datatext']['retitle'])</php>" ></td>
         </tr>
         <php>}</php>
         
@@ -344,6 +372,7 @@ function shenhe_after(data,status){
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 标题 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 金额 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 方式 </div></th>
+            <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 人数 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 备注说明 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 审核阶段 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:240px;"><div> 操作 </div></th>
@@ -355,8 +384,8 @@ function shenhe_after(data,status){
         
         <tr height="30" class="evenListRowS1" id="itemlist<{$v['chanpinID']}>">
           <td scope="row" align="left" valign="top"><{$i}></td>
-          <td scope="row" align="left" valign="top"><input type="text" name="title" id="title<{$v['chanpinID']}>" value="<{$v['title']}>"></td>
-          <td scope="row" align="left" valign="top"><input type="text" name="value" style="width:80px;" id="value<{$v['chanpinID']}>" value="<{$v['value']}>"></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="title" id="title<{$v['chanpinID']}>" value="<{$v['title']}>" check="^\S+$" warning="标题不能为空,且不能含有空格" ></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="value" style="width:80px;" id="value<{$v['chanpinID']}>" value="<{$v['value']}>" check="^\S+$" warning="金额不能为空,且不能含有空格" ></td>
           <td scope="row" align="left" valign="top"><select id="method<{$v['chanpinID']}>">
               <option value="<{$v['method']}>"><{$v['method']}></option>
               <option disabled="disabled">--------</option>
@@ -370,27 +399,38 @@ function shenhe_after(data,status){
               <option value="对冲">对冲</option>
               <option value="月结">月结</option>
             </select></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="renshu" style="width:80px;" id="renshu<{$v['chanpinID']}>" value="<php>if($v['renshu']) echo $v['renshu']; else echo 0;</php>" check="^\S+$" warning="人数不能为空,且不能含有空格" ></td>
           <td scope="row" align="left" valign="top"><input type="text" name="remark" id="remark<{$v['chanpinID']}>" value="<{$v['remark']}>"></td>
-          <td scope="row" align="left" valign="top"><strong><{$v['shenhe_remark']}></strong></td>
+          <td scope="row" align="left" valign="top"><strong 
+          <PHP>if($v['status_shenhe'] != '批准'){</PHP>style="color:red"<PHP>}</PHP>
+          ><{$v['shenhe_remark']}></strong></td>
           <td scope="row" align="left" valign="top"><input class="button" type="button" value="删除" onClick="if(window.confirm('要刪除嗎?')==true)deleteSystemItem(<{$v['chanpinID']}>,'itemlist')" />
-            <input class="button" type="button" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
+            <input class="button" type="button" id="btsave_<{$v['chanpinID']}>" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
   
       <php>
       $taskom = A("Method")->_checkOMTaskShenhe($v['chanpinID'],'报账项');
       if(false !== $taskom){
       if(cookie('show_action') == '批准'){
       </php>
-      <input type="button" value=" <php>echo cookie('show_word');</php> " name="button" onclick="doshenhe_baozhangitem('检出','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
+      <input type="button" value=" <php>echo cookie('show_word');</php> " id="btshenhe_<{$v['chanpinID']}>" onclick="doshenhe_baozhangitem('检出','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
       <php>}if(cookie('show_action') == '申请'){
       </php>
-      <input type="button" value=" <php>echo cookie('show_word');</php> " name="button" onclick="doshenhe_baozhangitem('申请','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
+      <input type="button" value=" <php>echo cookie('show_word');</php> " id="btshenhe_<{$v['chanpinID']}>" onclick="doshenhe_baozhangitem('申请','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
       <php>}}else{</php>
       <php>if(count(explode('未审核',$v['shenhe_remark'])) > 1) $alterword = '计调未申请审核！！！';</php>
       <php>if(count(explode('申请',$v['shenhe_remark'])) > 1) $alterword = '经理未审核！！！';</php>
-      <php>if(count(explode('财务审核',$v['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
-      <input type="button" value="审核" name="button" onclick="alert('<{$alterword}>')" >
+      <php>if(count(explode('财务',$v['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
+      <input type="button" value="审核" onclick="alert('<{$alterword}>')" >
       <php>}if(A("Method")->checkshenheback($v['chanpinID'],'报账项')){</php>
-      <input type="button" value=" 审核回退 " name="button" onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$v['chanpinID']}>,'报账项');">
+      <input type="button" value=" 审核回退 " onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$v['chanpinID']}>,'报账项','<{$actionmethod}>');">
+	  <php>}else{</php>
+          <php>if($baozhang['status_shenhe'] == '批准'){</php>
+      <input type="button" value="回退" onclick="alert('报账单已经审核，无法回退报账项！')" >
+          <php>}elseif($v['status_shenhe'] == '批准'){</php>
+      <input type="button" value="回退" onclick="alert('该项目已被批准，只有最后批准人允许回退！！！')" >
+          <php>}else{</php>
+      <input type="button" value="回退" onclick="alert('已经回退！')" >
+          <php>}</php>
 	  <php>}</php>
       
           <td scope="row" align="left" valign="top"><input type="checkbox" 
@@ -423,6 +463,7 @@ function shenhe_after(data,status){
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 标题 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 金额 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 方式 </div></th>
+            <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 人数 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 备注说明 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 审核阶段 </div></th>
             <th scope="col" nowrap="nowrap" style="min-width:240px;"><div> 操作 </div></th>
@@ -434,8 +475,8 @@ function shenhe_after(data,status){
         
         <tr height="30" class="evenListRowS1" id="itemlist<{$v['chanpinID']}>">
           <td scope="row" align="left" valign="top"><{$i}></td>
-          <td scope="row" align="left" valign="top"><input type="text" name="title" id="title<{$v['chanpinID']}>" value="<{$v['title']}>"></td>
-          <td scope="row" align="left" valign="top"><input type="text" name="value" style="width:80px;" id="value<{$v['chanpinID']}>" value="<{$v['value']}>"></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="title" id="title<{$v['chanpinID']}>" value="<{$v['title']}>" warning="标题不能为空,且不能含有空格" ></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="value" style="width:80px;" id="value<{$v['chanpinID']}>" value="<{$v['value']}>" warning="金额不能为空,且不能含有空格" ></td>
           <td scope="row" align="left" valign="top"><select id="method<{$v['chanpinID']}>">
               <option value="<{$v['method']}>"><{$v['method']}></option>
               <option disabled="disabled">--------</option>
@@ -449,26 +490,37 @@ function shenhe_after(data,status){
               <option value="对冲">对冲</option>
               <option value="月结">月结</option>
             </select></td>
+          <td scope="row" align="left" valign="top"><input type="text" name="renshu" style="width:80px;" id="renshu<{$v['chanpinID']}>" value="<php>if($v['renshu']) echo $v['renshu']; else echo 0;</php>" check="^\S+$" warning="人数不能为空,且不能含有空格" ></td>
           <td scope="row" align="left" valign="top"><input type="text" name="remark" id="remark<{$v['chanpinID']}>" value="<{$v['remark']}>"></td>
-          <td scope="row" align="left" valign="top"><strong><{$v['shenhe_remark']}></strong></td>
+          <td scope="row" align="left" valign="top"><strong 
+          <PHP>if($v['status_shenhe'] != '批准'){</PHP>style="color:red"<PHP>}</PHP>
+          ><{$v['shenhe_remark']}></strong></td>
           <td scope="row" align="left" valign="top"><input class="button" type="button" value="删除" onClick="if(window.confirm('要刪除嗎?')==true)deleteSystemItem(<{$v['chanpinID']}>,'itemlist')" />
-            <input class="button" type="button" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
+            <input class="button" type="button" id="btsave_<{$v['chanpinID']}>" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
       <php>
       $taskom = A("Method")->_checkOMTaskShenhe($v['chanpinID'],'报账项');
       if(false !== $taskom){
       if(cookie('show_action') == '批准'){
       </php>
-      <input type="button" value=" <php>echo cookie('show_word');</php> " name="button" onclick="doshenhe_baozhangitem('检出','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
+      <input type="button" value=" <php>echo cookie('show_word');</php> " id="btshenhe_<{$v['chanpinID']}>" onclick="doshenhe_baozhangitem('检出','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
       <php>}if(cookie('show_action') == '申请'){
       </php>
-      <input type="button" value=" <php>echo cookie('show_word');</php> " name="button" onclick="doshenhe_baozhangitem('申请','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
+      <input type="button" value=" <php>echo cookie('show_word');</php> " id="btshenhe_<{$v['chanpinID']}>" onclick="doshenhe_baozhangitem('申请','报账项',<{$v['chanpinID']}>,'<{$v['title']}>');">
       <php>}}else{</php>
       <php>if(count(explode('未审核',$v['shenhe_remark'])) > 1) $alterword = '计调未申请审核！！！';</php>
       <php>if(count(explode('申请',$v['shenhe_remark'])) > 1) $alterword = '经理未审核！！！';</php>
-      <php>if(count(explode('财务审核',$v['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
-      <input type="button" value="审核" name="button" onclick="alert('<{$alterword}>')" >
+      <php>if(count(explode('财务',$v['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
+      <input type="button" value="审核" onclick="alert('<{$alterword}>')" >
       <php>}if(A("Method")->checkshenheback($v['chanpinID'],'报账项')){</php>
-      <input type="button" value=" 审核回退 " name="button" onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$v['chanpinID']}>,'报账项');">
+      <input type="button" value=" 审核回退 " onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$v['chanpinID']}>,'报账项','<{$actionmethod}>');">
+	  <php>}else{</php>
+          <php>if($baozhang['status_shenhe'] == '批准'){</php>
+      <input type="button" value="回退" onclick="alert('报账单已经审核，无法回退报账项！')" >
+          <php>}elseif($v['status_shenhe'] == '批准'){</php>
+      <input type="button" value="回退" onclick="alert('该项目已被批准，只有最后批准人允许回退！！！')" >
+          <php>}else{</php>
+      <input type="button" value="回退" onclick="alert('已经回退！')" >
+          <php>}</php>
 	  <php>}</php>
       
           <td scope="row" align="left" valign="top"><input type="checkbox" 
@@ -529,7 +581,7 @@ function shenhe_after(data,status){
           <td scope="row" align="left" valign="top"><input type="text" name="remark" id="remark<{$v['chanpinID']}>" value="<{$v['remark']}>"></td>
           <td scope="row" align="left" valign="top"></td>
           <td scope="row" align="left" valign="top"><input class="button" type="button" value="删除" onClick="if(window.confirm('要刪除嗎?')==true)deleteSystemItem(<{$v['chanpinID']}>,'itemlist')" />
-            <input class="button" type="button" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
+            <input class="button" type="button" id="btsave_<{$v['chanpinID']}>" value="修改" onClick="if(CheckForm('form_yingshou','resultdiv_2'))save(<{$v['chanpinID']}>,'itemlist<{$v[chanpinID]}>');"/>
           <td scope="row" align="left" valign="top"><input type="checkbox" 
             <php>if($v['is_print'] =='不打印'){</php>
             checked="checked"
@@ -543,4 +595,26 @@ function shenhe_after(data,status){
     </form>
   </div>
 </div>
+
+<div style="position: absolute; display:none" id="shenhediv">
+  <table cellspacing="0" cellpadding="1" border="0" class="olBgClass">
+    <tbody>
+      <tr>
+        <td><table cellspacing="0" cellpadding="0" border="0" width="100%" class="olCgClass">
+            <tbody>
+              <tr>
+                <td width="100%" class="olCgClass"><div style="float:left">审核记录</div>
+                  <div style="float: right"> <a title="关闭" href="javascript:void(0);" onClick="javascript:return div_close('shenhediv');"> <img border="0" src="<{:__PUBLIC__}>/myerp/images/close.gif" style="margin-left:2px; margin-right: 2px;"> </a> </div></td>
+              </tr>
+            </tbody>
+          </table>
+          <table cellspacing="0" cellpadding="0" border="0" width="100%" class="olFgClass">
+            <tbody id="shenhe_box">
+            </tbody>
+          </table></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <tp:includeCA file="Index:footer" />

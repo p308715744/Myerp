@@ -15,7 +15,19 @@ class DijieAction extends CommonAction{
 			$zituan = $Chanpin->where("`chanpinID` = '$chanpinID' and `status` != '准备'")->find();
 			if($zituan)
 				$this->assign("show_chengtuan",true);
+			if($_REQUEST['type'] == '团队报账单'){
+				$tem_cp = $Chanpin->relation("tdbzdlist")->where("`chanpinID` = '$_REQUEST[chanpinID]'")->find();
+				$tem_cp = $tem_cp['tdbzdlist'];
+			}
+			elseif($_REQUEST['baozhangID']){
+				$tem_cp = $Chanpin->where("`chanpinID` = '$_REQUEST[baozhangID]'")->find();
+			}
+			else	
+			$tem_cp = $Chanpin->where("`chanpinID` = '$chanpinID'")->find();
+			$this->assign("tem_cp",$tem_cp);
 		}
+		
+		
 		$this->display('Dijie:header_chanpin');
 	}
 	
@@ -26,6 +38,14 @@ class DijieAction extends CommonAction{
 		$this->assign("navposition",$directory);
 		$chanpin_list = A('Method')->getDataOMlist('地接','DJtuan',$_REQUEST);
 		$this->assign("page",$chanpin_list['page']);
+		$ViewBaozhang = D("ViewBaozhang");
+		$i = 0;
+		foreach($chanpin_list['chanpin'] as $v){
+			//报账单
+			$bzd = $ViewBaozhang->where("`parentID` = '$v[chanpinID]'")->find();
+			$chanpin_list['chanpin'][$i]['baozhang'] = $bzd;
+			$i++;
+		}
 		$this->assign("chanpin_list",$chanpin_list['chanpin']);
 		$this->display('Dijie:index');
     }
@@ -376,6 +396,12 @@ class DijieAction extends CommonAction{
     public function deletechanpin() {
 		A('Method')->_deletechanpin('地接');
 	}
+	
+    public function jiezhiorbaoming() {
+		A('Method')->_jiezhiorbaoming('地接');
+	}
+	
+	
 	
 }
 ?>

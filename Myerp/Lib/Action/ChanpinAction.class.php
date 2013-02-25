@@ -57,6 +57,9 @@ class ChanpinAction extends CommonAction{
 		//获得个人部门及分类列表
 		$bumenfeilei = A("Method")->_getbumenfenleilist('组团');
 		$this->assign("bumenfeilei",$bumenfeilei);
+		//部门列表
+		$bumenall = A("Method")->_getDepartmentList();
+		$this->assign("bumenall",$bumenall);
 		$this->display('fabu');
 	}
 	
@@ -71,14 +74,21 @@ class ChanpinAction extends CommonAction{
 			//检查dataOM
 			$xianlu = A('Method')->_checkDataOM($_REQUEST['chanpinID'],'线路','管理');
 			if(false === $xianlu)
-			$this->ajaxReturn($_REQUEST,'错误，无管理权限！', 0);
+				$this->ajaxReturn($_REQUEST,'错误，无管理权限！', 0);
 			$xianlu = $Chanpin->relation("xianlu")->find($_REQUEST['chanpinID']);
 			$_REQUEST['xianlu']['kind'] = $xianlu['xianlu']['kind'];
 			$_REQUEST['xianlu']['guojing'] = $xianlu['xianlu']['guojing'];
-			//部门
-			$ViewDepartment = D("ViewDepartment");
-			$bumen = $ViewDepartment->where("`systemID` = '$_REQUEST[departmentID]'")->find();
-			$_REQUEST['bumen_copy'] = $bumen['title'];
+			$zituanlist = $Chanpin->relationGet("zituanlist");
+			$ViewBaozhang = D('ViewBaozhang');
+			foreach($zituanlist as $z){
+				//判断子团报账单
+				$bzdall = $ViewBaozhang->where("`parentID` = '$z[chanpinID]' AND (`status_system` = '1')")->findall();
+				foreach($bzdall as $b){
+					if($b['status_shenhe'] == '批准'){
+						$this->ajaxReturn($_REQUEST, '部门子团已经报账，禁止修改线路信息！！！', 0);
+					}
+				}
+			}
 		}
 		else{
 			//判断计调角色,返回用户DUR
@@ -129,7 +139,7 @@ class ChanpinAction extends CommonAction{
 			$_REQUEST['chanpinID'] = $Chanpin->getRelationID();
 			//生成OM
 			if($Chanpin->getLastmodel() == 'add'){
-				$dataOMlist = A("Method")->_setDataOMlist('计调','组团');
+				$dataOMlist = A("Method")->_setDataOMlist('计调','组团','',$_REQUEST['xianlu']['guojing']);
 				A("Method")->_createDataOM($_REQUEST['chanpinID'],'线路','管理',$dataOMlist);
 			}
 			//自动申请审核
@@ -176,8 +186,8 @@ class ChanpinAction extends CommonAction{
 	
 	public function deletezituan()
 	{
-		$this->ajaxReturn('', '功能未开启', 0);
-		
+		C('TOKEN_ON',false);
+//		$this->ajaxReturn('', '功能未开启', 0);
 		$chanpinID = $_REQUEST['chanpinID'];
 		$parentID = $_REQUEST['parentID'];
 		//检查dataOM
@@ -187,17 +197,36 @@ class ChanpinAction extends CommonAction{
 			exit;
 		}
 		$Chanpin = D("Chanpin");
-		$dat['chanpinID'] = $chanpinID;
-		$dat['status_system'] = -1;
 		$Chanpin->startTrans();
-		if (false !== $Chanpin->save($dat)){
-			if(A("Method")->shengchengzituan_2($parentID)){
-				$Chanpin->commit();
-				$this->ajaxReturn('', '删除成功！', 1);
+		$ViewZituan = D("ViewZituan");
+		$ViewBaozhang = D("ViewBaozhang");
+		$chanp = $ViewZituan->where("`chanpinID` = '$chanpinID'")->find();
+		if($chanp['status_baozhang'] == '批准'){
+			$Chanpin->rollback();
+			$this->ajaxReturn($_REQUEST,'该团已经报账，不能删除！！！', 0);
+		}
+		else{
+			$bzd = $ViewBaozhang->relation("baozhangitemlist")->where("`parentID` = '$chanpinID'")->find();
+			foreach($bzd['baozhangitemlist'] as $vol){
+				if($vol['status_shenhe'] == '批准'){
+					$Chanpin->rollback();
+					$this->ajaxReturn($_REQUEST,'该团已经开始报账，报账项目已审核，不能删除！！！', 0);
+				}
 			}
 		}
-		$Chanpin->rollback();
-		$this->ajaxReturn('', $Chanpin->getError(), 0);
+		//保存
+		$dat['chanpinID'] = $chanpinID;
+		$dat['status_system'] = -1;
+		if (false !== $Chanpin->save($dat)){
+//			if(A("Method")->shengchengzituan_2($parentID)){
+				$Chanpin->commit();
+				$this->ajaxReturn('', '删除成功！', 1);
+//			}
+		}
+		else{
+			$Chanpin->rollback();
+			$this->ajaxReturn('', $Chanpin->getError(), 0);
+		}
 	}
 	
 	
@@ -306,19 +335,23 @@ class ChanpinAction extends CommonAction{
 	
 	public function deletechengben()
 	{
+		C('TOKEN_ON',false);
 		$chanpinID = $_REQUEST['chanpinID'];
-		$Chengben = D("Chengben");
-		$ViewChengben = D("ViewChengben");
-		$cb = $ViewChengben->where("`chanpinID` = '$chanpinID'")->find();
+		$Chanpin = D("Chanpin");
+//		$ViewChengben = D("ViewChengben");
+//		$cb = $ViewChengben->where("`chanpinID` = '$chanpinID'")->find();
+		$cb = $Chanpin->where("`chanpinID` = '$chanpinID'")->find();
 		$cb['status_system'] = -1;
 		//检查dataOM
 		$xianlu = A('Method')->_checkDataOM($cb['parentID'],'线路','管理');
 		if(false === $xianlu)
 			$this->ajaxReturn($_REQUEST,'错误，无管理权限！', 0);
-		if (false !== $Chengben->save($cb))
+		if (false !== $Chanpin->save($cb)){
 			$this->ajaxReturn('', '删除成功！', 1);
+			
+		}
 		else
-			$this->ajaxReturn('', $Chengben->getError(), 0);
+			$this->ajaxReturn('', $Chanpin->getError(), 0);
 	}
 	
 	
@@ -370,12 +403,15 @@ class ChanpinAction extends CommonAction{
 	
 	
 	
-	public function left_fabu($html) {
+	public function left_fabu($htmltp='',$pagetype='') {
 		$ViewDepartment = D("ViewDepartment");
 		$where['type'] = array('like','%联合体%');
 		$bumenlist = $ViewDepartment->where($where)->findall();
 		$this->assign("bumenlist",$bumenlist);
-		$this->display('Chanpin:'.$html);
+		$zutuanlist = $ViewDepartment->where("`type` like '%组团%' and `type` not like '%联合体%' and `type` not like '%办事处%'")->findall();
+		$this->assign("zutuanlist",$zutuanlist);
+		$this->assign("pagetype",$pagetype);
+		$this->display('Chanpin:'.$htmltp);
 	}
 	
 	public function header_chanpin() {
@@ -983,6 +1019,315 @@ class ChanpinAction extends CommonAction{
 		A('Method')->_copytonew('线路');
 	}
 	
-
+	
+	
+    public function jiezhiorbaoming() {
+		if($_REQUEST['datatype'])
+		A('Method')->_jiezhiorbaoming($_REQUEST['datatype']);
+		else
+		A('Method')->_jiezhiorbaoming('线路');
+	}
+	
+	
+	public function tongji() {
+		A("Method")->showDirectory("统计");
+		//搜索
+		if($_REQUEST['title'])
+			$where_unit['title'] = array('like','%'.$_REQUEST['title'].'%');
+		if($_REQUEST['listtype'] == '员工'){
+			$where['user_name'] = array('like','%'.$_REQUEST['title'].'%');
+		}
+		$where['status_system'] = 1;
+		if($_REQUEST['start_time'] && $_REQUEST['end_time']){
+			$where['shenhe_time'] = array('between',strtotime($_REQUEST['start_time']).','.strtotime($_REQUEST['end_time']));	
+		}
+		else{
+			$month = NF_getmonth();
+			$fm_forward_month = $month['forward'];
+			$where['chutuanriqi'] = array('between',$fm_forward_month.'-01'.','.date("Y-m").'-01');	
+			$_REQUEST['start_time'] = $fm_forward_month.'-01';
+			$_REQUEST['end_time'] = date("Y-m").'-01';
+			$this->assign("start_time",$fm_forward_month.'-01');
+			$this->assign("end_time",date("Y-m").'-01');
+		}
+		if($_REQUEST['departmentID'])
+			$where['departmentID'] = $_REQUEST["departmentID"];
+		$ViewDataDictionary = D("ViewDataDictionary");
+		
+		//获得用户权限，部门列表
+		$ViewDepartment = D("ViewDepartment");
+		$role = A("Method")->_checkRolesByUser('网管,总经理,出纳,会计,财务,财务总监','行政');
+		if($role){
+			$unitdata = $ViewDepartment->where("`type` like '%组团%'")->findall();
+		}
+		else{
+			$role = A("Method")->_checkRolesByUser('经理','组团');
+			if(!$role)
+				exit;
+			$i = 0;
+			foreach($role as $v){
+				$unitdata[$i] = $ViewDepartment->where("`systemID` = '$v[bumenID]'")->find();
+				$i++;
+			}
+			$unitdata = about_unique($unitdata);
+		}
+		//部门列表
+		if($_REQUEST["departmentID"]){
+			foreach($unitdata as $b){
+				if($b['systemID'] == $_REQUEST["departmentID"])
+				$newdata[0] = $b;
+			}
+			$unitdata = $newdata;
+		}
+		//end
+		//总体统计。
+		$ViewZituan = D("ViewZituan");
+		$ViewDingdan = D("ViewDingdan");
+		$ViewBaozhang = D("ViewBaozhang");
+		$ViewBaozhangitem = D("ViewBaozhangitem");
+		$i = 0;
+		foreach($unitdata as $v){
+			$where['departmentID'] = $v['systemID'];
+			$tuanall = $ViewZituan->where($where)->findall();
+			foreach($tuanall as $vol){
+				$zituanall[$i] = $vol;
+				$i++;
+			}
+		}
+		$i = 0;
+		foreach($zituanall as $v){
+			$tongji['tuanshu'] += 1;
+			$tongji['jihua_renshu'] += $v['renshu'];
+			$queren_renshu = 0;
+			$zhanwei_renshu = 0;
+			$houbu_renshu = 0;
+			$dingdan_renshu = 0;
+			$yingfu = 0;
+			$yingshou = 0;
+			//订单人数
+			$dingdanall = $ViewDingdan->where("`parentID` = '$v[chanpinID]' and `status_system` = 1")->findall();
+			foreach($dingdanall as $vol){
+				if($vol['status'] == '确认'){
+					$tongji['queren_renshu'] += $vol['chengrenshu'] + $vol['ertongshu'];
+					$queren_renshu += $vol['chengrenshu'] + $vol['ertongshu'];
+				}
+				if($vol['status'] == '占位'){
+					$tongji['zhanwei_renshu'] += $vol['chengrenshu'] + $vol['ertongshu'];
+					$zhanwei_renshu += $vol['chengrenshu'] + $vol['ertongshu'];
+				}
+				if($vol['status'] == '候补'){
+					$tongji['houbu_renshu'] += $vol['chengrenshu'] + $vol['ertongshu'];
+					$houbu_renshu += $vol['chengrenshu'] + $vol['ertongshu'];
+				}
+				$tongji['dingdan_renshu'] += $vol['chengrenshu'] + $vol['ertongshu'];
+				$dingdan_renshu += $vol['chengrenshu'] + $vol['ertongshu'];
+			}
+			//报账单
+			$baozhangall = $ViewBaozhang->where("`parentID` = '$v[chanpinID]'")->findall();
+			foreach($baozhangall as $vol){
+				if($vol['type'] == '团队报账单'){
+				  $tongji['baozhang_renshu'] += $vol['renshu'];
+				  $baozhang_renshu = $vol['renshu'];
+				}
+				$itemall = $ViewBaozhangitem->where("`parentID` = '$vol[chanpinID]' and `status_system` = 1")->findall();
+				foreach($itemall as $w){
+					if($w['type'] == '支出项目'){
+						$tongji['yingfu'] += $w['value'];
+						$yingfu += $w['value'];
+					}
+					if($w['type'] == '结算项目'){
+						$tongji['yingshou'] += $w['value'];
+						$yingshou += $w['value'];
+					}
+				}
+			}
+			$zituanall[$i]['queren_renshu'] = $queren_renshu;
+			$zituanall[$i]['zhanwei_renshu'] = $zhanwei_renshu;
+			$zituanall[$i]['houbu_renshu'] = $houbu_renshu;
+			$zituanall[$i]['dingdan_renshu'] = $dingdan_renshu;
+			$zituanall[$i]['baozhang_renshu'] = $baozhang_renshu;
+			$zituanall[$i]['yingshou'] = $yingshou;
+			$zituanall[$i]['yingfu'] = $yingfu;
+			$i++;
+		}
+		$this->assign("tongji",$tongji);
+		//分类处理
+		//人员统计
+		if($_REQUEST['listtype'] == '员工'){
+			$this->assign("markpos",$_REQUEST['listtype']);
+			//用户列表
+			$ViewUser = D("ViewUser");
+			$i = 0;
+			foreach($unitdata as $v){
+				$listarray = A("Method")->_getBumenUserlist($v['systemID']);
+				foreach($listarray as $lol){
+					$userlist[$i] = $lol;
+					$i++;
+				}
+			}
+			$unitdata = about_unique($userlist);
+			$unitdata = array_values($unitdata);
+			//搜索用户
+			if($_REQUEST['title']){
+				foreach($unitdata as $tt){
+					if($tt['title'] == $_REQUEST['title']){
+						$unitdata = null;
+						$unitdata[0] = $tt;
+						break;
+					}
+				}
+			}
+		}
+		//end人员统计
+		$i = 0;
+		foreach($unitdata as $v){
+			if($_REQUEST['listtype'] == '员工'){
+				$right = $v['title'];
+			}
+			else{
+				$right = $v['systemID'];
+			}
+			$m = 0;
+			foreach($zituanall as $vol){
+				if($_REQUEST['listtype'] == '员工'){
+					$left = $vol['user_name'];
+				}
+				else{
+					$left = $vol['departmentID'];
+				}
+				if($left == $right){
+					$unitdata[$i]['zituan'][$m] = $vol;
+					$unitdata[$i]['jihua_renshu'] += (int)$vol['renshu'];
+					$unitdata[$i]['queren_renshu'] += (int)$vol['queren_renshu'];
+					$unitdata[$i]['zhanwei_renshu'] += (int)$vol['zhanwei_renshu'];
+					$unitdata[$i]['houbu_renshu'] += (int)$vol['houbu_renshu'];
+					$unitdata[$i]['dingdan_renshu'] += (int)$vol['dingdan_renshu'];
+					$unitdata[$i]['baozhang_renshu'] += (int)$vol['baozhang_renshu'];
+					$unitdata[$i]['yingshou'] += (int)$vol['yingshou'];
+					$unitdata[$i]['yingfu'] += (int)$vol['yingfu'];
+					$m++;
+				}
+			}
+			if($_REQUEST['returntype'] == 'ajax')
+				$data = $unitdata[$i]['zituan'];
+			$i++;
+		}
+		$this->assign("unitdata",$unitdata);
+		//打印
+		if($_REQUEST['doprint'] == 1){
+			$this->display('print_yingshou');
+			return ;	
+		}
+		if($_REQUEST['export'] == 1){
+			//导出Word
+			header("Content-type:application/msword");
+			header("Content-Disposition:attachment;filename=" . $_REQUEST['start_time'].'至'.$_REQUEST['end_time'] . "绩效统计.doc");
+			header("Pragma:no-cache");        
+			header("Expires:0"); 
+			$this->display('print_yingshou');
+			return ;	
+		}
+		
+		//返回	
+		if($_REQUEST['returntype'] == 'ajax'){
+				$str = '
+					<table cellpadding="0" cellspacing="0" width="100%" class="list view">
+						<tr height="20">
+						  <th scope="col" nowrap="nowrap"><div> 序号 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:200px;"><div> 标题 </div></th>'.$tabtile.'
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 团号 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 出团日期  </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 操作人 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 计划人数 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 订单人数/确认/占位/候补 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 报账情况 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 报账人数 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 计划应收 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 计划应付 </div></th>
+						  <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 盈亏 </div></th>
+						</tr>
+				';
+				$i = 0;
+				foreach($data as $v){$i++;
+					$str .= '
+					<tr class="evenListRowS1">
+					  <td>'.$i.'</td>
+					  <td><a target="_blank" href="'.SITE_INDEX.'Chanpin/zituanxinxi/chanpinID/'.$v['chanpinID'].'">'.$v['title_copy'].'</a></td>'.$tabvalue.'
+					  <td>'.$v['tuanhao'].'</td>
+					  <td>'.$v['chutuanriqi'].'</td>
+					  <td>'.$v['user_name'].'</td>
+					  <td>'.$v['renshu'].'</td>
+					  <td>'.$v['dingdan_renshu'].'/'.$v['queren_renshu'].'/'.$v['zhanwei_renshu'].'/'.$v['houbu_renshu'].'</td>
+					  <td>'.$v['baozhang_remark'].'</td>
+					  <td>'.$v['baozhang_renshu'].'</td>
+					  <td>'.number_format($v['yingshou']).'</td>
+					  <td>'.number_format($v['yingfu']).'</td>
+					  <td>'.number_format($v['yingshou']-$v['yingfu']).'</td>
+					</tr>
+					';
+				}
+				$str .= '
+					<tr class="evenListRowS1">
+					  <td align="right" colspan="3">
+					  '.$page.'
+					  </td>
+					</tr>
+					</table>
+				';
+				$this->ajaxReturn($str, '', 1);
+		}
+		else{
+			$this->display('tongji');
+		}
+	}
+	
+    public function deletechanpin() {
+		$typevalue = $_REQUEST['typevalue'];
+		if(!$typevalue)
+			$typevalue = '子团';
+		A('Method')->_deletechanpin($typevalue);
+	}
+	
+	
+	
+    public function resetOM() {
+		if(false !== A('Method')->_resetOM())
+		$this->ajaxReturn('', '成功！', 1);
+	}
+	
+	
+	
+	
+    public function chaxunma() {
+		$chanpinID = $_REQUEST['chanpinID'];
+		$Chanpin = D("Chanpin");
+		$chanp = $Chanpin->where("`chanpinID` = '$chanpinID'")->find();
+		if(!$chanp)
+		echo "查询码对应的产品不存在！！！";
+		if($chanp['marktype'] == 'xianlu'){
+			redirect(SITE_INDEX."Chanpin/fabu/chanpinID/".$chanpinID);
+		}
+		if($chanp['marktype'] == 'zituan'){
+			redirect(SITE_INDEX."Chanpin/zituanxinxi/chanpinID/".$chanpinID);
+		}
+		if($chanp['marktype'] == 'Djtuan'){
+			redirect(SITE_INDEX."Dijie/fabu/chanpinID/".$chanpinID);
+		}
+		if($chanp['marktype'] == 'baozhang'){
+			$chanp_p = $Chanpin->where("`chanpinID` = '$chanp[parentID]'")->find();
+			if($chanp_p['marktype'] == 'zituan')
+			redirect(SITE_INDEX."Chanpin/zituanbaozhang/doprint/打印/baozhangID/".$chanpinID);
+			if($chanp_p['marktype'] == 'DJtuan')
+			redirect(SITE_INDEX."Dijie/zituanbaozhang/doprint/打印/baozhangID/".$chanpinID);
+		}
+    }
+	
+	
+	
+	
+	
+	
+	
+	
 }
 ?>

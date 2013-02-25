@@ -63,10 +63,10 @@ function quxiao_after(data,status){
 		window.location = SITE_INDEX+'Xiaoshou/dingdanlist';
 	}
 }
-function querendingdan(id){
-	jQuery("#status").val('确认');
-	ThinkAjax.sendForm('form2',SITE_INDEX+'Xiaoshou/dopostdingdanxinxi/',doComplete,'resultdiv');
-}
+
+
+
+
 </script>
 
 
@@ -250,10 +250,11 @@ function querendingdan(id){
           <td align="left" style="height: 32px"> 证件类型： </td>
           <td align="left" style="height: 32px"> 证件号码： </td>
           <td align="left" style="height: 32px"> 应付： </td>
-          <td align="left" style="height: 32px"> 备注： </td>
-          <td align="left" style="height: 32px"> 付款状态/付款确认 </td>
-          <td align="left" style="height: 32px"> 客户类型 </td>
-          <td align="left" style="height: 32px"> 详细资料： </td>
+          <td align="left" style="height: 32px; min-width:80px;"> 备注： </td>
+          <td align="left" style="height: 32px; min-width:180px;"> 付款状态/付款确认 </td>
+          <td align="left" style="height: 32px; min-width:60px;"> 客户类型 </td>
+          <td align="left" style="height: 32px; min-width:60px;"> 详细资料： </td>
+          <td align="left" style="height: 32px; min-width:180px;"> 操作： </td>
         </tr>
        <php>$i = 0; foreach($tuanyuan as $vo){$i++;</php>
        <input type="hidden" name="tuanyuanID<{$i}>" value="<{$vo['id']}>" />
@@ -271,7 +272,7 @@ function querendingdan(id){
           <option value="女">女</option>
           </select>
           </td>
-          <td align="left" style="height: 32px"><input name="telnum<{$i}>" type="text" value="<{$vo['telnum']}>"></td>
+          <td align="left" style="height: 32px"><input name="telnum<{$i}>" type="text" value="<{$vo['telnum']}>" check="^\S+$" warning="所有人员电话号码不能为空,且不能含有空格"></td>
           <td align="left" style="height: 32px">
           <select name="zhengjiantype<{$i}>">
        <php>if($vo['zhengjiantype']){</php>
@@ -304,13 +305,17 @@ function querendingdan(id){
            <input type="hidden" name="ispay<{$i}>" id="ispay<{$vo[id]}>" <php>if(!$vo['ispay']){</php> value="未付款" <php>}</php> value="<{$vo['ispay']}>"/>
             <input style="width:60px;" class="button" type="button" value=" 确认 " onclick="dofukuan(<{$vo[id]}>)">
           </td>
-          <td align="left" style="height: 32px"><php>if($vo[laokehu] == 0) echo '新客户' ;else echo '老客户';</php></td>
+          <td align="left" style="height: 32px"><input type="hidden" name="is_leader<{$i}>" id="is_leader<{$vo[id]}>" value="<{$vo['is_leader']}>"><php>if($vo['is_leader'] == '领队') echo '领队';else{if($vo[laokehu] == 0) echo '新客户' ;else echo '老客户';}</php></td>
           <td align="left" style="height: 32px">
           <php>if($vo['id']){</php>
           <a href="javascript:TravelerDetail(<{$vo['id']}>)">查看</a>
           <php>}else{</php>
           <a href="javascript:TravelerDetail('')">查看</a>
           <php>}</php>
+          </td>
+          <td align="left" style="height: 32px">
+            <input type="button" value="领队/团员" name="button" class="button primary" onclick="if(window.confirm('确定设置？')==true)lingduiortuanyuan(<{$vo['id']}>);">
+            <input type="button" value="取消参团" name="button" class="button primary" onclick="if(window.confirm('确定取消？')==true)quxiaocantuan(<{$vo['id']}>);">
           </td>
         </tr>
         <php>}</php>
@@ -323,16 +328,18 @@ function querendingdan(id){
           <td align="left" style="height: 32px"> 拼音： </td>
           <td align="left" style="height: 32px"> 类型： </td>
           <td align="left" style="height: 32px"> 性别： </td>
+          <td align="left" style="height: 32px"> 联系电话： </td>
           <td align="left" style="height: 32px"> 证件类型： </td>
           <td align="left" style="height: 32px"> 证件号码： </td>
           <td align="left" style="height: 32px"> 生日： </td>
           <td align="left" style="height: 32px"> 户籍地： </td>
           <td align="left" style="height: 32px"> 证件有效期： </td>
           <td align="left" style="height: 32px"> 应付： </td>
-          <td align="left" style="height: 32px"> 备注： </td>
-          <td align="left" style="height: 32px"> 付款状态/付款确认 </td>
-          <td align="left" style="height: 32px"> 客户类型 </td>
-          <td align="left" style="height: 32px"> 详细资料： </td>
+          <td align="left" style="height: 32px; min-width:80px;"> 备注： </td>
+          <td align="left" style="height: 32px; min-width:180px;"> 付款状态/付款确认 </td>
+          <td align="left" style="height: 32px; min-width:60px;"> 客户类型 </td>
+          <td align="left" style="height: 32px; min-width:60px;"> 详细资料： </td>
+          <td align="left" style="height: 32px; min-width:180px;"> 操作： </td>
         </tr>
        <php>$i = 0; foreach($tuanyuan as $vo){$i++;</php>
        <input type="hidden" name="tuanyuanID<{$i}>" value="<{$vo['id']}>" />
@@ -351,15 +358,16 @@ function querendingdan(id){
           <option value="女">女</option>
           </select>
           </td>
+          <td align="left" style="height: 32px"><input name="telnum<{$i}>" type="text" value="<{$vo['telnum']}>" check="^\S+$" warning="所有人员电话号码不能为空,且不能含有空格"></td>
           <td align="left" style="height: 32px">
           <select name="zhengjiantype<{$i}>">
        <php>if($vo['zhengjiantype']){</php>
           <option value="<{$vo['zhengjiantype']}>"><{$vo['zhengjiantype']}></option>
           <option disabled="disabled">----------------</option>
        <php>}</php>
-          <option value="身份证">身份证</option>
           <option value="护照">护照</option>
           <option value="通行证">通行证</option>
+          <option value="身份证">身份证</option>
           </select>
           </td>
           <td align="left" style="height: 32px"><input name="zhengjianhaoma<{$i}>" type="text" value="<{$vo['zhengjianhaoma']}>"></td>
@@ -386,13 +394,17 @@ function querendingdan(id){
            <input type="hidden" name="ispay<{$i}>" id="ispay<{$vo[id]}>" <php>if(!$vo['ispay']){</php> value="未付款" <php>}</php> value="<{$vo['ispay']}>"/>
             <input style="width:60px;" class="button" type="button" value=" 确认 " onclick="dofukuan(<{$vo[id]}>)">
           </td>
-          <td align="left" style="height: 32px"><php>if($vo[laokehu] == 0) echo '新客户' ;else echo '老客户';</php></td>
+          <td align="left" style="height: 32px"><input type="hidden" name="is_leader<{$i}>" id="is_leader<{$vo[id]}>" value="<{$vo['is_leader']}>"><php>if($vo['is_leader'] == '领队') echo '领队';else{if($vo[laokehu] == 0) echo '新客户' ;else echo '老客户';}</php></td>
           <td align="left" style="height: 32px">
           <php>if($vo['id']){</php>
           <a href="javascript:TravelerDetail(<{$vo['id']}>)">查看</a>
           <php>}else{</php>
           <a href="javascript:TravelerDetail('')">查看</a>
           <php>}</php>
+          </td>
+          <td align="left" style="height: 32px">
+            <input type="button" value="领队/团员" name="button" class="button primary" onclick="if(window.confirm('确定设置？')==true)lingduiortuanyuan(<{$vo['id']}>);">
+            <input type="button" value="取消参团" name="button" class="button primary" onclick="if(window.confirm('确定取消？')==true)quxiaocantuan(<{$vo['id']}>);">
           </td>
         </tr>
         <php>}</php>

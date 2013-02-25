@@ -16,6 +16,7 @@
       <tbody>
         <tr height="20">
           <th scope="col" nowrap="nowrap" style="min-width:200px;width:200px;"><div style=" background:#4E8CCF; color:#FFF"> 标题 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 人数 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 金额 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 方式 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:200px;"><div> 备注说明 </div></th>
@@ -25,10 +26,13 @@
         <php>foreach($baozhanglist as $vol){ if($vol['type'] != '结算项目') continue;</php>
           <tr height="40" class="evenListRowS1">
             <td scope="row" align="left" valign="top"><{$vol['title']}></td>
+            <td scope="row" align="left" valign="top"><{$vol['renshu']}></td>
             <td scope="row" align="left" valign="top"><{$vol['value']}></td>
             <td scope="row" align="left" valign="top"><{$vol['method']}></td>
             <td scope="row" align="left" valign="top"><{$vol['remark']}></td>
-            <td scope="row" align="left" valign="top"><strong><{$vol['shenhe_remark']}></strong></td>
+            <td scope="row" align="left" valign="top"><strong 
+            <PHP>if($vol['status_shenhe'] != '批准'){</PHP>style="color:red"<PHP>}</PHP>
+            ><{$vol['shenhe_remark']}></strong></td>
             <td scope="row" align="left" valign="top">
               <input type="button" value="修改" name="button" class="button primary" onClick="showinfo(<{$vol['chanpinID']}>);">
               <input type="button" value="删除" name="button" class="button primary" onClick="if(window.confirm('要刪除嗎?')==true)deleteSystemItem(<{$vol['chanpinID']}>);" >
@@ -44,10 +48,16 @@
       <php>}}else{</php>
       <php>if(count(explode('未审核',$vol['shenhe_remark'])) > 1) $alterword = '计调未申请审核！！！';</php>
       <php>if(count(explode('申请',$vol['shenhe_remark'])) > 1) $alterword = '经理未审核！！！';</php>
-      <php>if(count(explode('财务审核',$vol['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
+      <php>if(count(explode('财务',$vol['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
       <input type="button" value="审核" name="button" onclick="alert('<{$alterword}>')" >
       <php>}if(A("Method")->checkshenheback($vol['chanpinID'],'报账项')){</php>
       <input type="button" value=" 审核回退 " name="button" onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$vol['chanpinID']}>,'报账项');">
+	  <php>}else{</php>
+          <php>if($baozhang['status_shenhe'] != '申请'){</php>
+      <input type="button" value="回退" name="button" onclick="alert('报账单已经审核，无法回退报账项！')" >
+          <php>}else{</php>
+      <input type="button" value="回退" name="button" onclick="alert('您没有权限执行该操作！')" >
+          <php>}</php>
 	  <php>}</php>
             </td>
           </tr>
@@ -67,6 +77,7 @@
       <tbody>
         <tr height="20">
           <th scope="col" nowrap="nowrap" style="min-width:200px;width:200px;"><div style=" background:#4E8CCF; color:#FFF"> 标题 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 人数 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 金额 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:100px;width:100px;"><div> 方式 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:200px;"><div> 备注说明 </div></th>
@@ -76,10 +87,13 @@
         <php>foreach($baozhanglist as $vol){ if($vol['type'] != '支出项目') continue;</php>
           <tr height="40" class="evenListRowS1">
             <td scope="row" align="left" valign="top"><{$vol['title']}></td>
+            <td scope="row" align="left" valign="top"><{$vol['renshu']}></td>
             <td scope="row" align="left" valign="top"><{$vol['value']}></td>
             <td scope="row" align="left" valign="top"><{$vol['method']}></td>
             <td scope="row" align="left" valign="top"><{$vol['remark']}></td>
-            <td scope="row" align="left" valign="top"><strong><{$vol['shenhe_remark']}></strong></td>
+            <td scope="row" align="left" valign="top"><strong 
+            <PHP>if($vol['status_shenhe'] != '批准'){</PHP>style="color:red"<PHP>}</PHP>
+            ><{$vol['shenhe_remark']}></strong></td>
             <td scope="row" align="left" valign="top">
               <input type="button" value="修改" name="button" class="button primary" onClick="showinfo(<{$vol['chanpinID']}>);">
               <input type="button" value="删除" name="button" class="button primary" onClick="if(window.confirm('要刪除嗎?')==true)deleteSystemItem(<{$vol['chanpinID']}>);" >
@@ -96,10 +110,16 @@
       <php>}}else{</php>
       <php>if(count(explode('未审核',$vol['shenhe_remark'])) > 1) $alterword = '计调未申请审核！！！';</php>
       <php>if(count(explode('申请',$vol['shenhe_remark'])) > 1) $alterword = '经理未审核！！！';</php>
-      <php>if(count(explode('财务审核',$vol['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
+      <php>if(count(explode('财务',$vol['shenhe_remark'])) > 1) $alterword = '财务已审核通过！！！';</php>
       <input type="button" value="审核" name="button" onclick="alert('<{$alterword}>')" >
       <php>}if(A("Method")->checkshenheback($vol['chanpinID'],'报账项')){</php>
       <input type="button" value=" 审核回退 " name="button" onclick="if(window.confirm('审核回退？')==true)shenhe_back(<{$vol['chanpinID']}>,'报账项');">
+	  <php>}else{</php>
+          <php>if($baozhang['status_shenhe'] != '申请'){</php>
+      <input type="button" value="回退" name="button" onclick="alert('报账单已经审核，无法回退报账项！')" >
+          <php>}else{</php>
+      <input type="button" value="回退" name="button" onclick="alert('您没有权限执行该操作！')" >
+          <php>}</php>
 	  <php>}</php>
             </td>
           </tr>
@@ -119,10 +139,16 @@
     <table cellspacing="1" cellpadding="0" border="0" width="100%" class="edit view">
       <tbody>
         <tr>
+          <td valign="top" scope="row" style="width:80px;"> 类型: </td>
+          <td valign="top" scope="row"><strong><span id="type_shuoming"></span></strong></td>
+          <td valign="top" scope="row" style="width:80px;"></td>
+          <td valign="top" scope="row"></td>
+        </tr>
+        <tr>
           <td valign="top" scope="row" style="width:80px;"> 标题: </td>
           <td valign="top" scope="row"><input name="title" id="title" type="text" style="width:100%" check="^\S+$" warning="标题不能为空,且不能含有空格" ></td>
-          <td valign="top" scope="row" style="width:80px;"> 类型: </td>
-          <td valign="top" scope="row"><span id="type_shuoming"></span></td>
+          <td valign="top" scope="row" style="width:80px;"> 人数: </td>
+          <td valign="top" scope="row"><input name="renshu" type="text" id="renshu" value="0" check="^\S+$" warning="人数不能为空,且不能含有空格" ></td>
         </tr>
         <tr>
           <td valign="top" scope="row" style="width:80px;"> 金额: </td>
@@ -159,13 +185,6 @@ jQuery(document).ready(function(){
 		autoOpen: false,
 		width: 600,
 		buttons: {
-			"申请审核": function() {
-				title = jQuery("#title").val();
-				doshenhe_baozhangitem('申请','报账项',jQuery("#chanpinID").val(),title);
-			},
-			"批准": function() {
-				doshenhe_baozhangitem('检出','报账项',jQuery("#chanpinID").val(),title);
-			},
 			"确认": function() {
 				if(CheckForm('form_item','resultdiv_2'))
 				ThinkAjax.sendForm('form_item','<{:SITE_INDEX}>Chanpin/dopost_baozhangitem/parentID/'+baozhangID,save_after,'resultdiv');

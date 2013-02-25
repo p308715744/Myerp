@@ -544,8 +544,8 @@ var SITE_INDEX = '<{:SITE_INDEX}>';
               <th scope="col" nowrap="nowrap"><div> 对象 </div></th>
               <th scope="col" nowrap="nowrap"><div> 对象类型 </div></th>
               <th scope="col" nowrap="nowrap"><div> 流程序号 </div></th>
+              <th scope="col" nowrap="nowrap"><div> 提醒 </div></th>
               <th scope="col" nowrap="nowrap"><div> 描述 </div></th>
-              <th scope="col" nowrap="nowrap"><div> 状态 </div></th>
               <th scope="col" nowrap="nowrap"><div> 操作 </div></th>
             </tr>
             
@@ -571,10 +571,19 @@ var SITE_INDEX = '<{:SITE_INDEX}>';
               </select>
               </td>
               <td scope="row" align="left" valign="top">
-              <form id="form_t<{$v['systemID']}>" ><input type="text" id="remark<{$v['systemID']}>" value="<{$v['remark']}>" check='^\S+$' warning="描述不能为空,且不能含有空格" style="width:200px;" ></form>
+              <select id="is_notice<{$v['systemID']}>" style="width:100px;" >
+              <php>if($v['is_notice']){</php>
+              <option value="<{$v['is_notice']}>"><{$v['is_notice']}></option>
+              <php>}else{</php>
+              <option value="开">开</option>
+              <php>}</php>
+              <option disabled="disabled">---------------</option>
+              <option value="开">开</option>
+              <option value="关">关</option>
+              </select>
               </td>
               <td scope="row" align="left" valign="top">
-              <{$v['status']}>
+              <form id="form_t<{$v['systemID']}>" ><input type="text" id="remark<{$v['systemID']}>" value="<{$v['remark']}>" check='^\S+$' warning="描述不能为空,且不能含有空格" style="width:200px;" ></form>
               </td>
               <td scope="row" align="left" valign="top">
               <input class="button" type="button" value="删除" onClick="if(window.confirm('要刪除嗎?')==true)deleteItem(<{$v['systemID']}>)" />
@@ -804,7 +813,7 @@ var SITE_INDEX = '<{:SITE_INDEX}>';
         <tr height="20">
           <th scope="col" nowrap="nowrap"> 序号</th>
           <th scope="col" nowrap="nowrap"><div> 标题 </div></th>
-          <th scope="col" nowrap="nowrap" style="min-width:400px;"><div> 职能类型 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:400px;"><div> 职能类型及属性 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 负责人 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 办公电话 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 邮编 </div></th>
@@ -852,7 +861,18 @@ var SITE_INDEX = '<{:SITE_INDEX}>';
         <input type="checkbox" name="type[]" value="行政" class="type<{$v['systemID']}>" checked="checked"/><label style="color:#4e8ccf">行政</label>
         <php>}else{</php>
         <input type="checkbox" name="type[]" value="行政" class="type<{$v['systemID']}>"/>行政
+        
+        <php>}if(in_array('国内',$typearray)){</php>
+        <input type="checkbox" name="type[]" value="国内" class="type<{$v['systemID']}>" checked="checked"/><label style="color:#4e8ccf">国内</label>
+        <php>}else{</php>
+        <input type="checkbox" name="type[]" value="国内" class="type<{$v['systemID']}>"/>国内
+        
+        <php>}if(in_array('境外',$typearray)){</php>
+        <input type="checkbox" name="type[]" value="境外" class="type<{$v['systemID']}>" checked="checked"/><label style="color:#4e8ccf">境外</label>
+        <php>}else{</php>
+        <input type="checkbox" name="type[]" value="境外" class="type<{$v['systemID']}>"/>境外
         <php>}</php>
+        
         </td>
         <td scope="row" align="left" valign="top"><input type="text" id="lianxiren<{$v['systemID']}>" style="width:80px" value="<{$v['lianxiren']}>"></td>
         <td scope="row" align="left" valign="top"><input type="text" id="officetel<{$v['systemID']}>" style="width:80px" value="<{$v['officetel']}>"></td>
@@ -1039,23 +1059,6 @@ var SITE_INDEX = '<{:SITE_INDEX}>';
         </td>
       </tr>
       <php>}}</php>
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       
         </tbody>
     </table>

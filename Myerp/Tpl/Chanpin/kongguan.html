@@ -77,9 +77,9 @@
                 <tr>
                   <td nowrap="nowrap" class="paginationActionButtons"><a id="select_link" href="javascript:void(0)" onclick="showbox(this,'selectitem')">选择&nbsp;<img src="<{:__PUBLIC__}>/myerp/images/MoreDetail.png" ></a>&nbsp;
                     <input class="button" type="button" value=" 调价 " id="tiaojia_create">
-                    <input class="button" type="button" value=" 删除 ">
-                    <input class="button" type="button" value=" 截止 "></td>
-                  <td nowrap="nowrap" align="right" class="paginationChangeButtons"><{$page}> </td>
+                    <input class="button" type="button" value=" 截止/报名 " onclick="jiezhiorbaoming()">
+                    <input class="button" type="button" value=" 删除 " onclick="if(window.confirm('确认删除？')==true)to_delete()">
+					<td nowrap="nowrap" align="right" class="paginationChangeButtons" style="color:#090"><{$page}></td>
                 </tr>
               </tbody>
             </table></td>
@@ -88,16 +88,18 @@
           <th scope="col" nowrap="nowrap"><input type="checkbox" value="" id="checkboxall" onclick="myCheckBoxSelect(this)"></th>
           <th scope="col" nowrap="nowrap"><div> 序号 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:100px;"><div> 团号 </div></th>
-          <th scope="col" nowrap="nowrap" style="min-width:300px; width:30%"><div> 产品名称 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:300px; width:30%;"><div> 产品名称 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 出团日期 </div></th>
           <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 操作人 </div></th>
           <th scope="col" nowrap="nowrap"><div> 修正值 </div></th>
           <th scope="col" nowrap="nowrap"><div> 名额 </div></th>
           <th scope="col" nowrap="nowrap"><div> 确认/占位 </div></th>
           <th scope="col" nowrap="nowrap"><div> 剩余 </div></th>
-          <th scope="col" nowrap="nowrap"><div> 状态 </div></th>
-          <th scope="col" nowrap="nowrap"><div> 锁状态 </div></th>
-          <th scope="col" nowrap="nowrap"><div> 报账情况 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 状态 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 收入款 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 支出款 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:60px;"><div> 盈亏 </div></th>
+          <th scope="col" nowrap="nowrap" style="min-width:80px;"><div> 报账情况 </div></th>
         </tr>
           <php>
       
@@ -116,10 +118,24 @@
         <td scope="row" align="left" valign="top"><php> echo number_format($v['queren_num'])</php>/<php> echo number_format($v['zhanwei_num'])</php></td>
         <td scope="row" align="left" valign="top"><{$v['shengyu_num']}></td>
         <td scope="row" align="left" valign="top"><{$v['status']}></td>
-        <td scope="row" align="left" valign="top"><{$v['islock']}></td>
+        <td scope="row" align="left" valign="top"><php>echo number_format($v[baozhang]['yingshou_copy']);</php></td>
+        <td scope="row" align="left" valign="top"><php>echo number_format($v[baozhang]['yingfu_copy']);</php></td>
+        <td scope="row" align="left" valign="top"><php>echo number_format($v[baozhang]['yingshou_copy']-$v[baozhang]['yingfu_copy']);</php></td>
         <td scope="row" align="left" valign="top"><{$v['baozhang_remark']}></td>
       </tr>
       <php> }</php>
+      
+        <tr class="pagination">
+          <td colspan="11"><table cellpadding="0" cellspacing="0" width="100%" class="paginationTable">
+              <tbody>
+                <tr>
+                  <td nowrap="nowrap" class="paginationActionButtons"><a id="select_link" href="javascript:void(0)" onclick="showbox(this,'selectitem')">选择&nbsp;<img src="<{:__PUBLIC__}>/myerp/images/MoreDetail.png" ></a>&nbsp;
+                    <input class="button" type="button" value=" 调价 " id="tiaojia_create">
+					<td nowrap="nowrap" align="right" class="paginationChangeButtons" style="color:#090"><{$page}></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
         </tbody>
       
     </table>
@@ -129,6 +145,7 @@
 <script language="javascript"> 
 function dosearch(str){
 		window.location = SITE_INDEX+'Chanpin/kongguan'+str;
+		//window.location = '<{$_SERVER[REQUEST_URI]}>'+str;
 }
 </script>
 <div id="selectitem" style=" display:none; position:absolute;">
@@ -251,6 +268,53 @@ function save_after(data,status){
 		location.reload();
 	}
 }
+
+function jiezhiorbaoming()
+{
+	var checkboxitem = new Array();
+	var i = 0;
+	jQuery(".checkboxitem").each(function(index, element) {
+		if(jQuery(this).attr("checked")){
+			checkboxitem[i] = jQuery(this).attr('value');
+			i++;
+		}
+	});
+	if(checkboxitem == ''){
+		ajaxalert('至少选择1项进行操作！');
+		return;
+	}
+	jQuery.ajax({
+		type:	"POST",
+		url:	"<{:SITE_INDEX}>Chanpin/jiezhiorbaoming/datatype/子团",
+		data:	"checkboxitem="+checkboxitem,
+		success:function(msg){
+			ThinkAjax.myAjaxResponse(msg,'resultdiv',save_after);
+		}
+	});
+}
+function to_delete(){
+	var checkboxitem = new Array();
+	var i = 0;
+	jQuery(".checkboxitem").each(function(index, element) {
+		if(jQuery(this).attr("checked")){
+			checkboxitem[i] = jQuery(this).attr('value');
+			i++;
+		}
+	});
+	if(checkboxitem == ''){
+		ajaxalert('至少选择1项进行操作！');
+		return;
+	}
+	jQuery.ajax({
+		type:	"POST",
+		url:	"<{:SITE_INDEX}>Chanpin/deletechanpin",
+		data:	"checkboxitem="+checkboxitem,
+		success:function(msg){
+			ThinkAjax.myAjaxResponse(msg,'resultdiv',save_after);
+		}
+	});
+}
+
 </script> 
 
 

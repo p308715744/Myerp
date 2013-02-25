@@ -15,7 +15,15 @@ class SetSystemAction extends CommonAction{
 	public function index(){
 		$type = $_REQUEST['type'];
 		A("Method")->showDirectory($type);
-		$this->display('index');
+		
+		$ViewUser = D("ViewUser");
+		$userlist = $ViewUser->where("`status_system` = '1'")->findall();
+		$this->assign("userlist",$userlist);
+			
+		$datas = A('Method')->_getDepartmentList();
+		$this->assign("bumenlist",$datas);
+		
+		$this->display('SetSystem:index');
 	}
 	
 	public function category(){
@@ -23,7 +31,7 @@ class SetSystemAction extends CommonAction{
 		$ViewCategory = D("ViewCategory");
 		$datas = $ViewCategory->findall();
 		$this->assign("datalist",$datas);
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 	public function dopostCategory(){
@@ -44,7 +52,7 @@ class SetSystemAction extends CommonAction{
 		$this->assign("systemDClist",$datalist['systemDClist']);
 		$this->assign("category",$datalist);
 		$this->assign("datatitle",' : "'.$datalist['category']['title'].'"');
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 		
 	}
 	
@@ -96,11 +104,11 @@ class SetSystemAction extends CommonAction{
 		//显示
 		if($_REQUEST['datatype']){
 			$this->assign("listdatas",$datas);
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		else{
 			A("Method")->showDirectory("数据开放与管理");
-			$this->display('OMindex');
+			$this->display('SetSystem:OMindex');
 		}
 		
 	}
@@ -113,7 +121,7 @@ class SetSystemAction extends CommonAction{
 		A('Method')->unitlist();
 		A("Method")->showDirectory("数据开放与管理");
 		$this->assign("datatitle",' > '.$_REQUEST['method'].' : "'.$_REQUEST['datatitle'].'"');
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 		
 	}
 	
@@ -157,7 +165,7 @@ class SetSystemAction extends CommonAction{
 		$users = A('Method')->data_list_noOM("ViewUser",$_REQUEST);
 		$this->assign("users",$users);
 		A("Method")->unitlist();
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 	
@@ -171,7 +179,7 @@ class SetSystemAction extends CommonAction{
 		A('Method')->unitlist();
 		$this->assign("DURlist",$DURlist);
 		$this->assign("datatitle",' : "'.$_REQUEST['datatitle'].'"');
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 	
@@ -262,7 +270,7 @@ class SetSystemAction extends CommonAction{
 		$dd = $ViewDirectory->relation("directory")->where("`systemID` = '$parentID'")->find();
 		if($dd)
 		$this->assign("datatitle",' : "'.$dd['title'].'"');
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 	//统一system内表数据增加
@@ -349,11 +357,11 @@ class SetSystemAction extends CommonAction{
 		//显示
 		if($_REQUEST['datatype']){
 			$this->assign("datatitle",' : "'.$datatype.'"');
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		else{
 			A("Method")->showDirectory("审核流程");
-			$this->display('shenheIndex');
+			$this->display('SetSystem:shenheIndex');
 		}
 	}
 	
@@ -369,7 +377,8 @@ class SetSystemAction extends CommonAction{
 				$_REQUEST['systemID'] = $System->getRelationID();
 			}
 			A('Method')->_ShenheToDataShenhe($_REQUEST);
-			
+			//修复开放om
+			A('Method')->_djcOMCreateRepair($data['datatype'],$data['processID']);
 			$this->ajaxReturn($_REQUEST, '保存成功！', 1);
 		}
 		else{
@@ -382,10 +391,14 @@ class SetSystemAction extends CommonAction{
 	{
 		$systemID = $_REQUEST['systemID'];
 		$System = D("System");
+		$ViewShenhe = D("ViewShenhe");
+		$data = $ViewShenhe->where("`systemID` = '$systemID'")->find();
 		if (false !== $System->relation("shenhe")->delete("$systemID"))
 		{
 			$DataShenhe = D("DataShenhe");
 			$DataShenhe->where("`shenheID` = '$systemID'")->delete();
+			//修复开放om
+			A('Method')->_djcOMCreateRepair($data['datatype'],$data['processID']);
 			$this->ajaxReturn('', '删除成功！', 1);
 		}
 		else
@@ -418,43 +431,43 @@ class SetSystemAction extends CommonAction{
 		if($where['type'] == '视频'){
 			A("Method")->showDirectory("视频");
 			if($_REQUEST['version'] == 'full')
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 			else{
 				$this->assign("datatitle",'视频选择');
-				$this->display('shipin');
+				$this->display('SetSystem:shipin');
 			}
 		}
 		elseif($where['type'] == '图片'){
 			A("Method")->showDirectory("图片");
 			if($_REQUEST['version'] == 'full')
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 			else{
 				if($_REQUEST['title']){
 					$tupianlist = split(',',$_REQUEST['title']);
 					$this->assign("tupianlist",$tupianlist);
 				}
 				$this->assign("datatitle",'图片选择');
-				$this->display('tupian');
+				$this->display('SetSystem:tupian');
 			}
 		}
 		elseif($where['type'] == '主题'){
 			A("Method")->showDirectory("主题");
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		elseif($where['type'] == '成本'){
 			A("Method")->showDirectory("成本");
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		elseif($where['type'] == '提成'){
 			A("Method")->showDirectory("提成");
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		elseif($where['type'] == 'FAQ'){
 			A("Method")->showDirectory("FAQ");
-			$this->display('templatelist');
+			$this->display('SetSystem:templatelist');
 		}
 		else
-			$this->display('DDindex');
+			$this->display('SetSystem:DDindex');
 	}
 	
 	
@@ -595,17 +608,142 @@ class SetSystemAction extends CommonAction{
 		A("Method")->showDirectory("部门设置");
 		$datas = A('Method')->_getDepartmentList();
 		$this->assign("datalist",$datas);
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 	public function roles(){
 		A("Method")->showDirectory("角色设置");
 		$datas = A('Method')->_getRolesList();
 		$this->assign("datalist",$datas);
-		$this->display('templatelist');
+		$this->display('SetSystem:templatelist');
 	}
 	
 
+	public function dopost_chanpinpingyi(){
+		C('TOKEN_ON',false);
+		$chanpinID = $_REQUEST['chanpinID'];
+		$username = $_REQUEST['username'];
+		$bumentitle = $_REQUEST['bumentitle'];
+		$ViewDepartment = D("ViewDepartment");
+		$bumen = $ViewDepartment->where("`title` = '$bumentitle'")->find();	
+		$Chanpin = D("Chanpin");
+		$cp = $Chanpin->where("`chanpinID` = '$chanpinID'")->find();
+		if($username)
+			$cp['user_name'] = $username;
+		if($bumen)
+			$cp['departmentID'] = $bumen['systemID'];
+		if($cp['marktype'] == 'zituan' || $cp['marktype'] == 'DJtuan' || $cp['marktype'] == 'xianlu'){
+			//产品转移
+			if($cp['marktype'] == 'xianlu'){
+				$Chanpin->mycreate($cp);
+				$datatype = '线路';
+				A('Method')->_OMRcreate($chanpinID,$datatype,$username);
+				$tuanall = $Chanpin->where("`parentID` = '$chanpinID'")->findall();
+				foreach($tuanall as $tuan){
+					$tuan['user_name'] = $cp['user_name'];
+					$tuan['departmentID'] = $cp['departmentID'];
+					$this->_tuanchanpinpingyi($tuan,$tuan['chanpinID'],$username);
+				}
+			}
+			else
+				$this->_tuanchanpinpingyi($cp,$chanpinID,$username);
+		}
+		if($cp['marktype'] == 'baohang'){
+			$baozhang = $Chanpin->relationGet("baozhang");
+			if($baozhang['type'] == '团队报账单')
+				$this->ajaxReturn('', '团队报账单不允许转移！', 0);
+		}
+		
+		$this->ajaxReturn('', '成功！', 1);
+		
+		
+	}
 
+
+	public function _tuanchanpinpingyi($cp,$chanpinID,$username){
+			$Chanpin = D("Chanpin");
+			$Chanpin->mycreate($cp);
+			//删除OM并重新生成
+			if($cp['marktype'] == 'zituan'){
+				$datatype = '子团';
+				//订单OM添加
+				$dingdanall = $Chanpin->where("`parentID` = '$chanpinID' and `marktype` = 'dingdan'")->findall();
+				foreach($dingdanall as $dingdan){
+					//开放给自己部门
+					$dataOMlist = A("Method")->_getmyOMlist($username);
+					A("Method")->_createDataOM($dingdan['chanpinID'],'订单','管理',$dataOMlist);
+				}
+			}
+			if($cp['marktype'] == 'DJtuan')
+			$datatype = '地接';
+			A('Method')->_OMRcreate($chanpinID,$datatype,$username);
+			//报账单转移
+			$bzdall = $Chanpin->where("`parentID` = '$chanpinID' and `marktype` = 'baozhang'")->findall();
+			$dataOMlist = A('Method')->_getDataOM($chanpinID,$datatype);
+			foreach($bzdall as $bzd){
+				$bzd['user_name'] = $cp['user_name'];
+				$bzd['departmentID'] = $cp['departmentID'];
+				$Chanpin->mycreate($bzd);
+				A('Method')->_OMRcreate($bzd['chanpinID'],'报账单',$username,$dataOMlist);
+				
+				//报账项目转移
+				$bzditemall = $Chanpin->where("`parentID` = '$bzd[chanpinID]' and `marktype` = 'baozhangitem'")->findall();
+				foreach($bzditemall as $bzditem){
+					$bzditem['user_name'] = $cp['user_name'];
+					$bzditem['departmentID'] = $cp['departmentID'];
+					$Chanpin->mycreate($bzditem);
+					A('Method')->_OMRcreate($bzditem['chanpinID'],'报账项',$username,$dataOMlist);
+				}
+				
+			}
+		
+	}
+	
+	//重置联合体线路om
+	public function resetOM(){
+		C('TOKEN_ON',false);
+		echo "重置联合体线路om<br>";
+		if(!$_REQUEST['page']){
+			dump('无page参数');
+			exit;
+		}
+		echo "执行page=".$_REQUEST['page'].'<br>';
+		$num = ($_REQUEST['page']-1)*1;
+		$num_2 = ($_REQUEST['page_2']-1)*100;
+		$Chanpin = D("Chanpin");
+		$ViewDepartment = D("ViewDepartment");
+		$filterlist = $ViewDepartment->Distinct(true)->field('systemID')->where("`type` like '%联合体%' or `type` like '%办事处%'")->limit("$num,1")->order("systemID desc")->findall();
+		dump($filterlist);
+		if($filterlist == null){
+			exit;
+		}
+		else{
+			$systemID = $filterlist[0]['systemID'];
+			$xianluall = $Chanpin->where("`departmentID` = '$systemID' and `marktype` = 'xianlu'")->limit("$num_2,100")->findall();
+			dump($xianluall);
+			if($xianluall == null){
+				$url = SITE_INDEX."SetSystem/resetOM/page/".($_REQUEST['page']+1)."/page_2/1";
+			}
+			else
+				$url = SITE_INDEX."SetSystem/resetOM/page/".$_REQUEST['page']."/page_2/".($_REQUEST['page_2']+1);
+			foreach($xianluall as $vol){
+				$cp = $Chanpin->where("`chanpinID` = '$vol[chanpinID]'")->find();
+				A("Method")->_OMRcreate($vol['chanpinID'],'线路',$cp['user_name']);
+			}
+		}
+		$this->assign("url",$url);
+		$this->display('Index:systemtools');
+		echo "结束";
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
 ?>

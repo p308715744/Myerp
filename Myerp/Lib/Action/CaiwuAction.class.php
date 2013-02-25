@@ -15,8 +15,11 @@ class CaiwuAction extends CommonAction{
 		$i = 0;
 		$ViewBaozhang = D("ViewBaozhang");
 		foreach($datalist['chanpin'] as $v){
+			
 			//项目信息
-			$datalist['chanpin'][$i]['datatext_copy'] = simple_unserialize($v['datatext_copy']);
+			$datalist['chanpin'][$i]['datatext_copy'] = $dat = simple_unserialize($v['datatext_copy']);
+			$bzd = $ViewBaozhang->where("`chanpinID` = '$dat[chanpinID]'")->find();
+			//$datalist['chanpin'][$i]['datatext_copy'] = $bzd;
 			if($_REQUEST['type'] == '收支项'){
 				//所属报账单信息
 				$bzdID = $datalist['chanpin'][$i]['datatext_copy']['parentID'];
@@ -433,7 +436,7 @@ class CaiwuAction extends CommonAction{
 					$str .= '
 					<tr class="evenListRowS1">
 					  <td>'.$i.'</td>
-					  <td><a target="_blank" href="'.SITE_INDEX.'Chanpin/zituanbaozhang/baozhangID/'.$v['chanpinID'].'">'.$v['title'].'</a></td>'.$tabvalue.'
+					  <td><a target="_blank" href="'.SITE_INDEX.'Chanpin/zituanbaozhang/doprint/打印/baozhangID/'.$v['chanpinID'].'">'.$v['title'].'</a></td>'.$tabvalue.'
 					  <td>'.$v['type'].'</td>
 					  <td>'.$v['renshu'].'</td>
 					  <td>'.$v['yingshou_copy'].'</td>
@@ -475,13 +478,62 @@ class CaiwuAction extends CommonAction{
 	
 	
 	
+	public function tuansearch() {
+		A("Method")->showDirectory("组团地接产品");
+		$ViewZituan = D("ViewZituan");
+		$ViewDJtuan = D("ViewDJtuan");
+		$ViewBaozhang = D("ViewBaozhang");
+		$chanpin_list = A('Method')->data_list_noOM('ViewSearch',$_REQUEST);
+		$i = 0;
+		foreach($chanpin_list['chanpin'] as $v){
+			if($v['marktype'] == 'zituan'){
+				$tuan = $ViewZituan->where("`chanpinID` = '$v[chanpinID]'")->find();
+			}
+			if($v['marktype'] == 'DJtuan'){
+				$tuan = $ViewDJtuan->where("`chanpinID` = '$v[chanpinID]'")->find();
+			}
+			$chanpin_list['chanpin'][$i]['tuan'] = $tuan;
+			//报账单
+			$bzd = $ViewBaozhang->where("`parentID` = '$v[chanpinID]'")->find();
+			$chanpin_list['chanpin'][$i]['baozhang'] = $bzd;
+			$i++;
+		}
+		$this->assign("page",$chanpin_list['page']);
+		$this->assign("chanpin_list",$chanpin_list['chanpin']);
+		$this->display('tuansearch');
+	}
 	
 	
+	public function danxiangfuwu() {
+		A("Method")->_danxiangfuwu('财务');
+	}
 	
-	
-	
-	
-	
+	public function tuanbaozhang() {
+		$Chanpin = D("Chanpin");
+		$bzd = $Chanpin->where("`chanpinID` = '$_REQUEST[baozhangID]'")->find();
+		$pcp = $Chanpin->where("`chanpinID` = '$bzd[parentID]'")->find();
+		if($pcp['marktype'] == 'zituan'){
+			$actionmethod = 'Chanpin';
+			$type = '子团';
+		}
+		elseif($pcp['marktype'] == 'DJtuan'){
+			$actionmethod = 'Dijie';
+			$type = '地接';
+		}
+		else{
+			$is_o = 1;
+			$actionmethod = 'Chanpin';
+		}
+		$this->assign("actionmethod",$actionmethod);
+		A("Method")->showDirectory("签证及票务");
+		if($is_o == 1)
+			$actionmethod = 'Caiwu';
+		$this->assign("action_type",$actionmethod);
+		if(!$_REQUEST['chanpinID'])
+			A("Method")->_baozhang();
+		else
+			A("Method")->_baozhang($type);
+	}
 	
 }
 ?>
