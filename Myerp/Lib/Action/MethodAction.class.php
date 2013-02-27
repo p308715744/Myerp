@@ -1273,6 +1273,7 @@ class MethodAction extends CommonAction{
 		$where['type'] = '管理';
 		else
 		$where['type'] = array('in','开放,管理');
+		
 		foreach($DURlist as $v){
 			$where['DUR'] = $v['bumenID'].',,';
 			$OMlist = $DataOM->Distinct(true)->field('dataID')->where($where)->find();
@@ -1317,12 +1318,9 @@ class MethodAction extends CommonAction{
 				cookie('_usedroles',$roles['title'],30);
 				cookie('_usedbumenaddr',$bumen['addr'],30);
 				cookie('_usedbumenfax',$bumen['fax'],30);
-				
 				return $omdata;
 			}
 		}
-		
-		
 		return false;
 	 }
 	 
@@ -1675,10 +1673,12 @@ class MethodAction extends CommonAction{
 			exit;
 		}
 		//检查dataOM
-		$omxiaoshou = $this->_checkDataOM($_REQUEST['shoujiaID'],'售价');
-		if(false === $omxiaoshou){
-			$this->display('Index:error');
-			exit;
+		if($_REQUEST['shoujiaID']){
+			$omxiaoshou = $this->_checkDataOM($_REQUEST['shoujiaID'],'售价');
+			if(false === $omxiaoshou){
+				$this->display('Index:error');
+				exit;
+			}
 		}
 		$Chanpin = D("Chanpin");
 		$shoujia = $Chanpin->relation("shoujia")->where("`chanpinID` = '$_REQUEST[shoujiaID]' AND (`status_system` = '1')")->find();
@@ -2670,6 +2670,7 @@ class MethodAction extends CommonAction{
 		$xianlu = $this->_checkDataOM($_REQUEST['parentID'],'报账单','管理');
 		if(false === $xianlu)
 			$this->ajaxReturn($_REQUEST,'错误，无管理权限！', 0);
+			
 		C('TOKEN_ON',false);
 		$Chanpin = D("Chanpin");
 		$ViewBaozhangitem = D("ViewBaozhangitem");
@@ -3321,7 +3322,7 @@ class MethodAction extends CommonAction{
 	//添加订单
     public function _zituanbaoming($roletype) {
 		if($roletype == '计调'){
-			$chanpinID = $_REQUEST['chanpin'];
+			$chanpinID = $_REQUEST['chanpinID'];
 			//检查dataOM
 			$xiaoshou = A('Method')->_checkDataOM($chanpinID,'子团','管理');
 			if(false === $xiaoshou){
